@@ -163,7 +163,7 @@ public class HeapMemoryMonitor {
       try {
         emitter.removeNotificationListener(notificationListener);
       } catch(ListenerNotFoundException e) {
-        LOG.warn("Failed to remove HeapMemoryMonitor notification listener from MemoryMXBean", e);
+        // LOG.warn("Failed to remove HeapMemoryMonitor notification listener from MemoryMXBean", e);
       }
     }
   }
