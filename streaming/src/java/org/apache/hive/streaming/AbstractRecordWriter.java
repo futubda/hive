@@ -197,8 +197,8 @@ public abstract class AbstractRecordWriter implements RecordWriter {
     this.autoFlush = conf.getBoolVar(HiveConf.ConfVars.HIVE_STREAMING_AUTO_FLUSH_ENABLED);
     this.memoryUsageThreshold = conf.getFloatVar(HiveConf.ConfVars.HIVE_HEAP_MEMORY_MONITOR_USAGE_THRESHOLD);
     this.ingestSizeThreshold = conf.getSizeVar(HiveConf.ConfVars.HIVE_STREAMING_AUTO_FLUSH_CHECK_INTERVAL_SIZE);
-    LOG.info("Memory monitorings settings - autoFlush: {} memoryUsageThreshold: {} ingestSizeThreshold: {}",
-      autoFlush, memoryUsageThreshold, ingestSizeBytes);
+    LOG.info("Memory monitoring settings - autoFlush: {} memoryUsageThreshold: {} ingestSizeThreshold: {}",
+            autoFlush, memoryUsageThreshold, ingestSizeBytes);
     this.heapMemoryMonitor = new HeapMemoryMonitor(memoryUsageThreshold);
     MemoryUsage tenuredMemUsage = heapMemoryMonitor.getTenuredGenMemoryUsage();
     if (tenuredMemUsage != null) {
@@ -209,8 +209,8 @@ public abstract class AbstractRecordWriter implements RecordWriter {
       float currentUsage = (float) tenuredMemUsage.getUsed() / (float) tenuredMemUsage.getMax();
       if (currentUsage > memoryUsageThreshold) {
         LOG.warn("LOW MEMORY ALERT! Tenured gen memory is already low. Increase memory to improve performance." +
-            " Used: {} Max: {}", LlapUtil.humanReadableByteCount(tenuredMemUsage.getUsed()),
-          LlapUtil.humanReadableByteCount(tenuredMemUsage.getMax()));
+                        " Used: {} Max: {}", LlapUtil.humanReadableByteCount(tenuredMemUsage.getUsed()),
+                LlapUtil.humanReadableByteCount(tenuredMemUsage.getMax()));
       }
     }
   }
@@ -347,6 +347,7 @@ public abstract class AbstractRecordWriter implements RecordWriter {
 
   @Override
   public void close() throws StreamingIOFailure {
+    this.heapMemoryMonitor.close();
     boolean haveError = false;
     String partition = null;
     logStats("Stats before close:");
@@ -368,6 +369,12 @@ public abstract class AbstractRecordWriter implements RecordWriter {
     }
     updaters.clear();
     logStats("Stats after close:");
+    try {
+      this.fs.close();
+    } catch (IOException var8) {
+      throw new StreamingIOFailure("Error while closing FileSystem", var8);
+    }
+
     if (haveError) {
       throw new StreamingIOFailure("Encountered errors while closing (see logs) " + getWatermark(partition));
     }

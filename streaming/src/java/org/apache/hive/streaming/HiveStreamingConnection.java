@@ -158,6 +158,7 @@ public class HiveStreamingConnection implements StreamingConnection {
   private Table tableObject = null;
   private String metastoreUri;
   private ConnectionStats connectionStats;
+  private Runnable onShutdownRunner;
 
   private HiveStreamingConnection(Builder builder) throws StreamingException {
     this.database = builder.database.toLowerCase();
@@ -551,6 +552,9 @@ public class HiveStreamingConnection implements StreamingConnection {
     } finally {
       getMSC().close();
       getHeatbeatMSC().close();
+      if (!ShutdownHookManager.isShutdownInProgress()) {
+        ShutdownHookManager.removeShutdownHook(this.onShutdownRunner);
+      }
     }
     LOG.info("Closed streaming connection. Agent: {} Stats: {}", getAgentInfo(), getConnectionStats());
   }
