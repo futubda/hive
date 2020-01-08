@@ -373,7 +373,10 @@ public abstract class AbstractRecordWriter implements RecordWriter {
     updaters.clear();
     logStats("Stats after close:");
     try {
-      this.fs.close();
+      if (this.fs != null) {
+        this.fs.close();
+        this.fs = null;
+      }
     } catch (IOException var8) {
       throw new StreamingIOFailure("Error while closing FileSystem", var8);
     }
@@ -544,6 +547,10 @@ public abstract class AbstractRecordWriter implements RecordWriter {
   }
 
   protected void logStats(final String prefix) {
+    if (conn == null) {
+      return;
+    }
+
     int openRecordUpdaters = updaters.values()
       .stream()
       .mapToInt(List::size)
@@ -554,7 +561,10 @@ public abstract class AbstractRecordWriter implements RecordWriter {
       .filter(Objects::nonNull)
       .mapToLong(RecordUpdater::getBufferedRowCount)
       .sum();
-    MemoryUsage memoryUsage = heapMemoryMonitor.getTenuredGenMemoryUsage();
+    MemoryUsage memoryUsage = null;
+    if (heapMemoryMonitor != null) {
+      memoryUsage = heapMemoryMonitor.getTenuredGenMemoryUsage();
+    }
     String oldGenUsage = "NA";
     if (memoryUsage != null) {
       oldGenUsage = "used/max => " + LlapUtil.humanReadableByteCount(memoryUsage.getUsed()) + "/" +
