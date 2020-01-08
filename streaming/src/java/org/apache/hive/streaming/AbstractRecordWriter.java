@@ -347,7 +347,10 @@ public abstract class AbstractRecordWriter implements RecordWriter {
 
   @Override
   public void close() throws StreamingIOFailure {
-    this.heapMemoryMonitor.close();
+    if (this.heapMemoryMonitor != null) {
+      this.heapMemoryMonitor.close();
+      this.heapMemoryMonitor = null;
+    }
     boolean haveError = false;
     String partition = null;
     logStats("Stats before close:");
